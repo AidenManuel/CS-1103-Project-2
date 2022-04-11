@@ -177,7 +177,8 @@ public class LoginScreen extends Application{
 			score.setMinWidth(300);
 			//score.setCellValueFactory(new PropertyValueFactory<User, Double>("Score"));
 			
-			PreparedStatement rankList;
+			// TODO fix
+			/*PreparedStatement rankList;
 			try {
 				rankList = con.prepareStatement("SELECT RANK() OVER (ORDER BY US_SCORE DESC) AS 'Rank', (SELECT US_DISPLAY_NAME FROM USERS WHERE US_ID=user_ranklist.US_ID) AS 'User', US_SCORE AS 'Score' FROM user_ranklist");
         		ResultSet result = rankList.executeQuery();        		
@@ -186,10 +187,8 @@ public class LoginScreen extends Application{
         		}
 			} catch (SQLException e) {
 				e.printStackTrace();
-			}
+			}*/
 			
-			rankTable.setItems(userList);
-			rankTable.getColumns().addAll(rankNum, user, score);
 			
 			
 			/// Note: For populating the table, I wasn't quite sure how it would interact with JDBC, so
@@ -376,27 +375,33 @@ public class LoginScreen extends Application{
 					String problemChoice = "" + problems.getValue();
 					String langChoice = "" + language.getValue();
 					String code = codeInput.getText();
-					int random = rand.nextInt(100);
 					
 					System.out.println("Problem Selected : " + problemChoice);
 					System.out.println("Submission Language : " + langChoice);
 					System.out.println("Submitted Code : \n" + code);
 					
-					/// Note: This is where you'll wanna take your query information for a submission
-					///       from. All the information of the submission is stored in those three
-					///       variables for you to put into the query.
+					PreparedStatement submission, output;
+					ResultSet result;
+					try {
+						submission = con.prepareStatement("CALL submit((SELECT US_ID FROM USERS WHERE US_DISPLAY_NAME=?), ?,(SELECT P_ID FROM PROBLEM WHERE P_NAME=?), ?, ?, @x)");
+						submission.setString(1, checkUser);
+						submission.setString(2, checkPw);
+						submission.setString(3, problemChoice);
+						submission.setString(4, langChoice);
+						submission.setString(5, code);
+						
+						submission.executeQuery();
+		        		
+						output = con.prepareStatement("SELECT @x");
+						result = output.executeQuery();
+						result.next();
+						
+						submitResult.setTextFill(Color.BLUE);
+						submitResult.setText(result.getString(1)); // This should be handled by the stored procedure
+						}
 					
-					// Just doing a random 50/50 for output right now, but you can integrate this with the stored procedure
-					
-					if (langChoice.equals("" + "Malboge")) {
-						submitResult.setTextFill(Color.DARKRED);
-						submitResult.setText("Sorry, language not supported D:"); // This should be handled by the stored procedure
-					} else if (random <= 50) {
-						submitResult.setTextFill(Color.DARKRED);
-						submitResult.setText("Submission Incorrect...");
-					} else if (random > 50) {
-						submitResult.setTextFill(Color.GREEN);
-						submitResult.setText("Submission Correct!");
+					catch (SQLException e){
+						System.out.println(e);
 					}
 				}
 			});
