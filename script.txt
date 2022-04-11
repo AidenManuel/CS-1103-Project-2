@@ -155,14 +155,32 @@ CREATE TABLE user_triumph (
 
 delimiter &bababooey
 	CREATE TRIGGER triumph_update AFTER INSERT ON SUBMISSION FOR EACH ROW BEGIN
-		IF (new.SOLVED = 1 AND NOT EXISTS(SELECT * FROM user_triumph WHERE user_triumph.P_ID = SUBMISSION.new.P_ID AND user_triumph.US_ID = SUBMISSION.new.US_ID))
-        THEN INSERT INTO user_triumph VALUES (SUBMISSION.new.US_ID, SUBMISSION.new.P_ID); END IF; END
+        IF NOT EXISTS (select * from user_triumph where US_ID = new.US_ID and P_ID = new.P_ID)
+        THEN INSERT INTO user_triumph VALUES (new.US_ID, new.P_ID); END IF; END
 	&bababooey
 delimiter ;
 
+delimiter &BingBong&
+	CREATE TRIGGER attempts AFTER INSERT ON SUBMISSION FOR EACH ROW BEGIN
+		IF (new.SOLVED = 0) THEN
+			UPDATE PROBLEM SET 
+            P_SUBMISSION_DENIED = P_SUBMISSION_DENIED + 1,
+            P_USER_TOTAL = P_USER_TOTAL + 1
+            WHERE P_ID = new.P_ID;
+			END IF;
+		IF NOT (new.SOLVED = 0) THEN
+			UPDATE PROBLEM SET 
+			P_SUBMISSION_ACCEPTED = P_SUBMISSION_ACCEPTED + 1,
+            P_USER_TOTAL = P_USER_TOTAL + 1,
+            P_USER_ACCEPTED = P_USER_ACCEPTED + 1
+            WHERE P_ID = new.P_ID;
+			END IF;
+		END &BingBong&
+	delimiter ;
+
 DROP VIEW IF EXISTS user_scores;
 CREATE VIEW user_scores AS
-	SELECT US_ID, SUM(P_DCUBED) AS US_SCORE 
+	SELECT US_ID, ROUND(SUM(P_DCUBED),3) AS US_SCORE 
     FROM (
 		user_triumph 
 			LEFT JOIN 
@@ -179,7 +197,7 @@ CREATE VIEW user_ranklist AS (
 
 DROP VIEW IF EXISTS	canada_provincial_ranklist;
 CREATE VIEW canada_provincial_ranklist AS (
-	SELECT SUB_NAME, SUM(US_SCORE) AS SUB_SCORE FROM (
+	SELECT SUB_NAME, ROUND(SUM(US_SCORE),3) AS SUB_SCORE FROM (
 		(SELECT SUB_NAME, US_ID FROM USERS WHERE R_NAME='CANADA') as temp1 
 			LEFT JOIN 
 		(SELECT US_ID, US_SCORE FROM user_scores) as temp2 ON temp1.US_ID=temp2.US_ID) 
@@ -416,3 +434,6 @@ SELECT COUNT(*) FROM USERS WHERE US_DISPLAY_NAME = "Nick Wu" AND US_PSWD = "1234
 
 SELECT * FROM SUBMISSION;
 SELECT * FROM user_scores;
+SELECT * FROM user_ranklist;
+SELECT * FROM canada_provincial_ranklist;
+SELECT * FROM problem_stats;
