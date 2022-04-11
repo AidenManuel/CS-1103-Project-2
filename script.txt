@@ -410,11 +410,11 @@ delimiter %IHaventSeenTheSunInWeeks%
             -- Randomly generated outcome
             IF judgementDay = 1 THEN 
                 INSERT INTO SUBMISSION (SOLVED, S_LANGUAGE, S_DATE, S_CONTENT, US_ID, P_ID)
-                VALUES (1, lang, CURDATE(), content, userid, problemid);
+                VALUES (1, lang, current_timestamp(), content, userid, problemid);
                 SELECT "Your answer was correct." INTO result;
             ELSE
                 INSERT INTO SUBMISSION (SOLVED, S_LANGUAGE, S_DATE, S_CONTENT, US_ID, P_ID)
-                VALUES (0, lang, CURDATE(), content, userid, problemid);
+                VALUES (0, lang, current_timestamp(), content, userid, problemid);
 
                 CASE 
                     WHEN judgementDay = 2 THEN SELECT "Your answer was incorrect." INTO result;
@@ -432,8 +432,12 @@ delimiter ;
 
 SELECT COUNT(*) FROM USERS WHERE US_DISPLAY_NAME = "Nick Wu" AND US_PSWD = "1234";
 
-SELECT * FROM SUBMISSION;
+SELECT * FROM SUBMISSION LIMIT 1000, 2000;
 SELECT * FROM user_scores;
 SELECT * FROM user_ranklist;
 SELECT * FROM canada_provincial_ranklist;
 SELECT * FROM problem_stats;
+
+SELECT * FROM user_triumph ORDER BY US_ID;
+SELECT P_NAME FROM PROBLEM WHERE P_ID NOT IN (SELECT P_ID FROM user_triumph WHERE US_ID=(SELECT US_ID FROM USERS WHERE US_DISPLAY_NAME = "Nick Wu"));
+SELECT * FROM PROBLEM;
