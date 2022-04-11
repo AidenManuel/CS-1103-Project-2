@@ -1,0 +1,54 @@
+#tilePane {
+	-fx-background-color:  white;
+	-fx-padding: 10 10 10 10;
+	-fx-alignment: center-left;
+}
+
+#gridPane {
+	-fx-background-color:  white;
+	-fx-padding: 10 10 10 10;
+	-fx-alignment: center;
+}
+
+#borderPane{
+	-fx-background-color:  lightgrey;
+}
+
+#btnLogin {
+    -fx-border-color: dimgrey;
+    -fx-padding: 3px 10px 3px 10px;
+    -fx-background-color: white;
+}
+
+#kattisGP {
+	-fx-background-color: #33333d;
+}
+
+#activeBtn {
+	-fx-background-color: #33333d;
+	-fx-text-fill: white;
+	-fx-border-color: #33333d;
+}
+
+#inactiveBtn {
+	-fx-background-color: #33333d;
+	-fx-text-fill: #898992;
+	-fx-border-color: #33333d;
+}
+#activeUser {
+	-fx-text-fill: white;
+}
+
+#kattisTitle {
+	-fx-text-fill: white;
+}
+
+#tableTitle {
+	-fx-text-fill: black;
+}
+
+#submit {
+	-fx-border-color: dimgrey;
+    -fx-padding: 3px 10px 3px 10px;
+    -fx-background-color: lawngreen;
+}
