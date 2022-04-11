@@ -291,12 +291,15 @@ public class LoginScreen extends Application{
 			
 			Label Problem = new Label("Problems");
 			Problem.setFont(Font.font(null, FontWeight.BOLD, 21));
+			Problem.setId("tableTitle");
 			
 			Label Language = new Label("Languages");
 			Language.setFont(Font.font(null, FontWeight.BOLD, 21));
+			Language.setId("tableTitle");
 			
 			Label Code = new Label("copy/paste code here");
 			Code.setFont(Font.font(null, FontWeight.BOLD, 21));
+			Code.setId("tableTitle");
 			
 			Rectangle rectSub = new Rectangle(1000,1000,1920*2,5);
 			rectSub.setStroke(Color.web("#f0b034"));
