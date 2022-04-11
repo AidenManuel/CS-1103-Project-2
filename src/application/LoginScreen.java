@@ -39,14 +39,6 @@ public class LoginScreen extends Application{
 			   con = DriverManager.getConnection("jdbc:mysql://localhost:3306/test2?useSSL=false","root","beans");
 			   launch(args);
 			   
-			   
-			   //Connection con=DriverManager.getConnection("jdbc:mysql://pizza.unbsj.ca:3306/Ch13_SaleCo_DW_MySQL?useSSL=false","Kaser1103","FakePassword");
-			   //here Ch13_SaleCo_DW_MySQL is database name, Kaser1103 is username and password is hardcoded (BAD!!)
-			   //Statement stmt=con.createStatement();
-			   //ResultSet rs=stmt.executeQuery("select * from DWPRODUCT");
-			   //while(rs.next())
-			   //    System.out.println(rs.getString(1)+"  "+rs.getString(2)+"  "+rs.getString(3));
-			   //con.close();
 		}
 		catch(Exception e)
 		{ 
@@ -138,7 +130,56 @@ public class LoginScreen extends Application{
 			login.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(login);
 			primaryStage.show();
+		///// Login Submit Button /////////////////////////
 			
+			btnLogin.setOnAction(new EventHandler<>() {
+				public void handle(ActionEvent event) {
+	        		checkUser = UNtbox.getText().toString();
+	        		checkPw = PWtbox.getText().toString();
+	        		Boolean check = false;
+	        		
+	        		// Not sure how you guys wanna go about logins via JDBC, but as long as you
+	        		// add all the users in through userList (the ArrayList declared up in main)
+	        		// then this code should still work fine.
+	        		PreparedStatement login;
+					try {
+						login = con.prepareStatement("SELECT COUNT(*) FROM USERS WHERE US_DISPLAY_NAME = ? AND US_PSWD = ?");
+						login.setString(1, checkUser);
+		        		login.setString(2, checkPw);
+		        		
+		        		ResultSet result = login.executeQuery();
+		        		result.next();
+		        		int x = Integer.parseInt(result.getString(1));
+		        		if (x == 1) check = true;
+		        		else;
+					} catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+	        		
+		        	if(check == true){
+		        		errorMessage.setText("WOOOOOOOOOOOO");
+		        		errorMessage.setTextFill(Color.GREEN);
+		        		primaryStage.setScene(kattisRank);
+		        		primaryStage.setTitle("Kattniss");
+		        		
+		        	}
+
+		        	else{
+	        			errorMessage.setText("Something's wrong here...");
+	        			errorMessage.setTextFill(Color.DARKRED);
+	        		}
+	        		
+	        		UNtbox.setText("");
+	        		PWtbox.setText("");
+				}
+			});
+	
+	///// Haha, remember login? I sure didn't the first few times I ran this... /////////////////////////
+	
+	primaryStage.setScene(login);
+	
 			//////////////////////////////////////////////////////
 			///// KATTIS SCENES //////////////////////////////////
 			//////////////////////////////////////////////////////
@@ -292,7 +333,26 @@ public class LoginScreen extends Application{
 			ChoiceBox language = new ChoiceBox(FXCollections.observableArrayList(langs));
 			language.setMinWidth(600);
 			
-			String probs[] = {"Easy", "Killer", "R2", "Speeding", "3-Sided Dice"};
+			
+			PreparedStatement loadProblems;
+			ArrayList<String> probsAL = new ArrayList<String>();
+			String probs[] = {};
+			System.out.println(checkUser);
+			try {
+				loadProblems = con.prepareStatement("SELECT P_NAME FROM PROBLEM WHERE P_ID NOT IN (SELECT P_ID FROM user_triumph WHERE US_ID=(SELECT US_ID FROM USERS WHERE US_DISPLAY_NAME = ?))");
+				loadProblems.setString(1, checkUser);
+        		ResultSet result = loadProblems.executeQuery();
+        		
+        		while (result.next()) {
+        			probsAL.add(result.getString(1));
+        		}
+        		
+        		probs = probsAL.toArray(probs);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 			ChoiceBox problems = new ChoiceBox(FXCollections.observableArrayList(probs));
 			problems.setMinWidth(600);
 			
@@ -363,7 +423,7 @@ public class LoginScreen extends Application{
 			
 			submissionRank.setOnAction(new EventHandler<>() {
 				public void handle(ActionEvent event) {
-	        		primaryStage.setScene(kattisSub);   // This is for switching to the Submissions Tab
+					primaryStage.setScene(kattisSub);   // This is for switching to the Submissions Tab
 				}
 			});
 			
@@ -406,61 +466,9 @@ public class LoginScreen extends Application{
 				}
 			});
 			
-			///// Login Submit Button /////////////////////////
-			
-					btnLogin.setOnAction(new EventHandler<>() {
-						public void handle(ActionEvent event) {
-			        		checkUser = UNtbox.getText().toString();
-			        		checkPw = PWtbox.getText().toString();
-			        		Boolean check = false;
-			        		
-			        		// Not sure how you guys wanna go about logins via JDBC, but as long as you
-			        		// add all the users in through userList (the ArrayList declared up in main)
-			        		// then this code should still work fine.
-			        		PreparedStatement login;
-							try {
-								login = con.prepareStatement("SELECT COUNT(*) FROM USERS WHERE US_DISPLAY_NAME = ? AND US_PSWD = ?");
-								login.setString(1, checkUser);
-				        		login.setString(2, checkPw);
-				        		
-				        		ResultSet result = login.executeQuery();
-				        		result.next();
-				        		int x = Integer.parseInt(result.getString(1));
-				        		if (x == 1) check = true;
-				        		else;
-							} catch (SQLException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							
-			        		
-				        	if(check == true){
-				        		errorMessage.setText("WOOOOOOOOOOOO");
-				        		errorMessage.setTextFill(Color.GREEN);
-				        		primaryStage.setScene(kattisRank);
-				        		primaryStage.setTitle("Kattniss");
-				        		activeUserRank.setText("Logged in as " + checkUser);
-				        		activeUserSub.setText("Logged in as " + checkUser);
-				        	}
-
-				        	else{
-			        			errorMessage.setText("Something's wrong here...");
-			        			errorMessage.setTextFill(Color.DARKRED);
-			        		}
-			        		
-			        		UNtbox.setText("");
-			        		PWtbox.setText("");
-						}
-					});
-			
-			///// Haha, remember login? I sure didn't the first few times I ran this... /////////////////////////
-			
-			primaryStage.setScene(login);
 			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
-	
 }
