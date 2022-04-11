@@ -3,6 +3,7 @@ package application;
 // matt smiley :))
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Random;
 import javafx.application.Application;
@@ -29,8 +30,7 @@ public class LoginScreen extends Application{
 	Scene kattisRank, kattisSub;
 	Random rand = new Random();
 	static Connection con = null;
-	//static ArrayList<User> userList = new ArrayList<User>();
-	static ObservableList<User> userList = FXCollections.observableArrayList();
+
 	
 	public static void main(String[] args) {
 		
@@ -159,7 +159,295 @@ public class LoginScreen extends Application{
 					
 	        		
 		        	if(check == true){
-		        		errorMessage.setText("WOOOOOOOOOOOO");
+		        		
+		    			//////////////////////////////////////////////////////
+		    			///// KATTIS SCENES //////////////////////////////////
+		    			//////////////////////////////////////////////////////
+
+		    			FileInputStream inputRank = null;
+						try {
+							inputRank = new FileInputStream(System.getProperty("user.dir") + "\\Kattis_Kat_smol.png");
+						} catch (FileNotFoundException e2) {
+							// TODO Auto-generated catch block
+							e2.printStackTrace();
+						}
+		    			
+		    			BorderPane kattisBPRank = new BorderPane();
+		    			
+		    			VBox kattisBoxRank = new VBox();
+		    			
+		    			GridPane kattisGPRank = new GridPane();
+		    			kattisGPRank.setHgap(0);
+		    			kattisGPRank.setVgap(0);
+		    			kattisBPRank.setCenter(kattisGPRank); 
+		    			//kattisGPRank.setGridLinesVisible(true); <-- Listen, it's useful for debugging okay...
+		    			
+		    			Button ranksRank = new Button("RANKS");
+		    			ranksRank.setFont(Font.font(null, FontWeight.BOLD, 14));
+		    			
+		    			Button submissionRank = new Button("SUBMISSIONS");
+		    			submissionRank.setFont(Font.font(null, FontWeight.BOLD, 14));
+		    				
+		    			///// Creating the Table /////////////////////////	
+		    			
+		    			PreparedStatement rankList;
+		    			try {
+		    				rankList = con.prepareStatement("SELECT RANK() OVER (ORDER BY US_SCORE DESC) AS 'Rank', (SELECT US_DISPLAY_NAME FROM USERS WHERE US_ID=user_ranklist.US_ID) AS 'User', US_SCORE AS 'Score' FROM user_ranklist");
+		            		ResultSet result = rankList.executeQuery();        		
+		            		while (result.next()) {
+		            				//userList.add(new User(result.getInt(1), result.getString(2), result.getDouble(3)));
+		            				// userList is what WOULD be the observable list. This code indeed results in proper users. Good luck tabelling them
+		            		}
+		    			} catch (SQLException e) {
+		    				e.printStackTrace();
+		    			}
+		    			
+
+		    			
+		    			
+		    			
+		    			
+		    			/// Note: For populating the table, I wasn't quite sure how it would interact with JDBC, so
+		    			///       I'm leaving that to you. It's a little funky to get working properly, but this 
+		    			///       link (https://docs.oracle.com/javafx/2/ui_controls/table-view.htm) should hopefully 
+		    			///       clear it up, as it's very well explained. Good luck :D
+		    				
+		    			///// Smol Kattis Cat Icon /////////////////////////	
+		    			
+		    			Image jRank = new Image(inputRank);
+		    			ImageView jwRank = new ImageView(jRank);
+		    			Label pictureKattisRank = new Label("", jwRank);
+		    			
+		    			///// Adding Some Labels /////////////////////////
+		    			
+		    			Label tableTitle = new Label("Ranklist");
+		    			tableTitle.setFont(Font.font(null, FontWeight.BOLD, 21));
+		    			
+		    			Label kattisTitleRank = new Label("Kattniss");
+		    			kattisTitleRank.setFont(Font.font(null, 26));
+		    			
+		    			Label activeUserRank = new Label("");
+		    			activeUserRank.setFont(Font.font(null, 14));
+		    				
+		    			///// Making the Orange Bar /////////////////////////
+		    			
+		    			Rectangle rectRank = new Rectangle(1000,1000,1920*2,5);
+		    			rectRank.setStroke(Color.web("#f0b034"));
+		    			rectRank.setFill(Color.web("#f0b034"));
+		    			
+		    			///// Adding Our Nodes /////////////////////////
+
+		    			kattisGPRank.add(activeUserRank, 0, 0);			
+		    			kattisGPRank.add(pictureKattisRank, 0, 1, 1, 2);  //
+		    			kattisGPRank.add(kattisTitleRank, 1, 1);          // The header bar is organized in a GridPane,
+		    			kattisGPRank.add(ranksRank, 1, 2);                // and then I will add the table below using
+		    			kattisGPRank.add(submissionRank, 2, 2);           // a basic VBox. For design and organization
+		    			kattisGPRank.add(rectRank, 0, 3, 5, 1);           //
+		    			
+		    			///// Compiling it in the VBox /////////////////////////
+
+		    			kattisBoxRank.getChildren().addAll(kattisGPRank, tableTitle, table);
+		    			
+		    			///// Setting Id's for CSS /////////////////////////
+		    			
+		    			ranksRank.setId("activeBtn");
+		    			submissionRank.setId("inactiveBtn");
+		    			kattisTitleRank.setId("kattisTitle");
+		    			activeUserRank.setId("activeUser");
+		    			tableTitle.setId("tableTitle");
+		    			kattisGPRank.setId("kattisGP");
+		    			
+		    			///// Finally, we make the Scene /////////////////////////
+		    			
+		    			kattisRank = new Scene(kattisBoxRank, 1000, 700);
+		    			kattisRank.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+		    			
+		    			//////////////////////////////////////////////////////////////////////////////////////
+		    			///// Now, we get on to one of the parts of JavaFX that really grinds my gears.  /////
+		    			///// You see, I was planning on having the header part with the tab bar remain  /////
+		    			///// static, and then reuse it for the Submission tab, to save some space and   /////
+		    			///// minimize the amount of code required. Well, JavaFX said no... Basically,   /////
+		    			///// it turns out you can't reuse nodes for different Scenes, or even different /////
+		    			///// Panes. So, since I'm too far gone now, I decided to just copy the above    /////
+		    			///// code, change all the variable names, and call it a night. No, it's not the /////
+		    			///// best way to do it. But I'm workin with what I've got here. Thanks for      /////
+		    			///// listening to my TED Talk.                                                  /////
+		    			//////////////////////////////////////////////////////////////////////////////////////
+		    			
+		    			FileInputStream inputSub = null;
+						try {
+							inputSub = new FileInputStream(System.getProperty("user.dir") + "\\Kattis_Kat_smol.png");
+						} catch (FileNotFoundException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+		    			
+		    			BorderPane kattisBPSub = new BorderPane();
+		    			
+		    			VBox kattisBoxSub = new VBox();
+		    			
+		    			GridPane kattisGPSub = new GridPane();
+		    			kattisGPSub.setHgap(0);
+		    			kattisGPSub.setVgap(0);
+		    			kattisBPSub.setCenter(kattisGPSub); 
+		    			//kattisGPSub.setGridLinesVisible(true); <-- still a debugging tool, I'm keeping it >:)
+		    			
+		    			Button ranksSub = new Button("RANKS");
+		    			ranksSub.setFont(Font.font(null, FontWeight.BOLD, 14));
+		    			
+		    			Button submissionSub = new Button("SUBMISSIONS");
+		    			submissionSub.setFont(Font.font(null, FontWeight.BOLD, 14));
+		    			
+		    			///// Creating the Choice Boxes /////////////////////////	
+		    			
+		    			/// Note: These are hardcoded, but if we need to pull these from the database
+		    			///       we can just use an ArrayList instead (so we don't have to worry about
+		    			///       number of problems) and pull the values in through JDBC.
+		    			/// Note: If you do pull values from the database, don't forget to add "Malboge"
+		    			///       back as a choice in the java, so that the database will reject it.
+		    			
+		    			
+		    			String langs[] = {("C"), ("C#"), ("C++"), ("COBOL"), ("F#"), ("Go"),
+		    							  ("Haskell"), ("Java"), ("Node.js"), ("SpiderMonkey"), ("Kotlin"), 
+		    							  ("Common Lisp"), ("Malboge"), ("Objective-C"), ("OCaml"), ("Pascal"), ("PHP"), 
+		    							  ("Prolog"), ("Python 2"), ("Python 3"), ("Ruby"), ("Rust")};
+		    			ChoiceBox language = new ChoiceBox(FXCollections.observableArrayList(langs));
+		    			language.setMinWidth(600);
+		    			
+		    			
+		    			PreparedStatement loadProblems;
+		    			ArrayList<String> probsAL = new ArrayList<String>();
+		    			String probs[] = {};
+		    			System.out.println(checkUser);
+		    			try {
+		    				loadProblems = con.prepareStatement("SELECT P_NAME FROM PROBLEM WHERE P_ID NOT IN (SELECT P_ID FROM user_triumph WHERE US_ID=(SELECT US_ID FROM USERS WHERE US_DISPLAY_NAME = ?))");
+		    				loadProblems.setString(1, checkUser);
+		            		ResultSet result = loadProblems.executeQuery();
+		            		
+		            		while (result.next()) {
+		            			probsAL.add(result.getString(1));
+		            		}
+		            		
+		            		probs = probsAL.toArray(probs);
+		    			} catch (SQLException e) {
+		    				// TODO Auto-generated catch block
+		    				e.printStackTrace();
+		    			}
+		    			
+		    			ChoiceBox problems = new ChoiceBox(FXCollections.observableArrayList(probs));
+		    			problems.setMinWidth(600);
+		    			
+		    			///// Creating the Code Input Area /////////////////////////	
+		    			
+		    			TextArea codeInput = new TextArea();
+		    			codeInput.setMinHeight(100);
+		    			codeInput.setMaxWidth(600);
+		    			codeInput.setWrapText(true);
+		    			
+		    			///// Creating the Code Submit Button /////////////////////////	
+		    			
+		    			Button submit = new Button("Submit!");
+		    			submissionSub.setFont(Font.font(null, FontWeight.BOLD, 14));
+		    			Label submitResult = new Label();
+		    			
+		    			///// Creating Other Nodes /////////////////////////	
+		    			
+		    			Image jSub = new Image(inputSub);
+		    			ImageView jwSub = new ImageView(jSub);
+		    			Label pictureKattisSub = new Label("", jwSub);
+		    			
+		    			Label kattisTitleSub = new Label("Kattniss");
+		    			kattisTitleSub.setFont(Font.font(null, 26));
+		    			
+		    			Label activeUserSub = new Label("");
+		    			activeUserSub.setFont(Font.font(null, 14));
+		    			
+		    			Label Problem = new Label("Problems");
+		    			Problem.setFont(Font.font(null, FontWeight.BOLD, 21));
+		    			
+		    			Label Language = new Label("Languages");
+		    			Language.setFont(Font.font(null, FontWeight.BOLD, 21));
+		    			
+		    			Label Code = new Label("copy/paste code here");
+		    			Code.setFont(Font.font(null, FontWeight.BOLD, 21));
+		    			
+		    			Rectangle rectSub = new Rectangle(1000,1000,1920*2,5);
+		    			rectSub.setStroke(Color.web("#f0b034"));
+		    			rectSub.setFill(Color.web("#f0b034"));
+		    			
+		    			kattisGPSub.add(activeUserSub, 0, 0);
+		    			kattisGPSub.add(pictureKattisSub, 0, 1, 1, 2);
+		    			kattisGPSub.add(kattisTitleSub, 1, 1);
+		    			kattisGPSub.add(ranksSub, 1, 2);
+		    			kattisGPSub.add(submissionSub, 2, 2);
+		    			kattisGPSub.add(rectSub, 0, 3, 5, 1);
+
+		    			kattisBoxSub.getChildren().addAll(kattisGPSub, Problem, problems, Language, language, Code, codeInput, submit, submitResult);
+		    			
+		    			ranksSub.setId("inactiveBtn");
+		    			submissionSub.setId("activeBtn");
+		    			kattisTitleSub.setId("kattisTitle");
+		    			activeUserSub.setId("activeUser");
+		    			submit.setId("submit");
+		    			kattisGPSub.setId("kattisGP");
+		    			
+		    			kattisSub = new Scene(kattisBoxSub, 1000, 700);
+		    			kattisSub.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+		    			
+		    			///// Setting Up Button Actions /////////////////////////
+		    			
+		    			ranksSub.setOnAction(new EventHandler<>() {
+		    				public void handle(ActionEvent event) {
+		    					primaryStage.setScene(kattisRank);  // This is for switching to the Ranks Tab
+		    				}
+		    			});
+		    			
+		    			submissionRank.setOnAction(new EventHandler<>() {
+		    				public void handle(ActionEvent event) {
+		    					primaryStage.setScene(kattisSub);   // This is for switching to the Submissions Tab
+		    				}
+		    			});
+		    			
+		    			
+		    			// This handles and gives console output for the submission, which you can integrate with JDBC
+		    			
+		    			submit.setOnAction(new EventHandler<>() {
+		    				public void handle(ActionEvent event) {
+		    					String problemChoice = "" + problems.getValue();
+		    					String langChoice = "" + language.getValue();
+		    					String code = codeInput.getText();
+		    					
+		    					System.out.println("Problem Selected : " + problemChoice);
+		    					System.out.println("Submission Language : " + langChoice);
+		    					System.out.println("Submitted Code : \n" + code);
+		    					
+		    					PreparedStatement submission, output;
+		    					ResultSet result;
+		    					try {
+		    						submission = con.prepareStatement("CALL submit((SELECT US_ID FROM USERS WHERE US_DISPLAY_NAME=?), ?,(SELECT P_ID FROM PROBLEM WHERE P_NAME=?), ?, ?, @x)");
+		    						submission.setString(1, checkUser);
+		    						submission.setString(2, checkPw);
+		    						submission.setString(3, problemChoice);
+		    						submission.setString(4, langChoice);
+		    						submission.setString(5, code);
+		    						
+		    						submission.executeQuery();
+		    		        		
+		    						output = con.prepareStatement("SELECT @x");
+		    						result = output.executeQuery();
+		    						result.next();
+		    						
+		    						submitResult.setTextFill(Color.BLUE);
+		    						submitResult.setText(result.getString(1)); // This should be handled by the stored procedure
+		    						}
+		    					
+		    					catch (SQLException e){
+		    						System.out.println(e);
+		    					}
+		    				}
+		    			});
+		    			
+		    			errorMessage.setText("WOOOOOOOOOOOO");
 		        		errorMessage.setTextFill(Color.GREEN);
 		        		primaryStage.setScene(kattisRank);
 		        		primaryStage.setTitle("Kattniss");
@@ -179,294 +467,7 @@ public class LoginScreen extends Application{
 	///// Haha, remember login? I sure didn't the first few times I ran this... /////////////////////////
 	
 	primaryStage.setScene(login);
-	
-			//////////////////////////////////////////////////////
-			///// KATTIS SCENES //////////////////////////////////
-			//////////////////////////////////////////////////////
 
-			FileInputStream inputRank = new FileInputStream(System.getProperty("user.dir") + "\\Kattis_Kat_smol.png");
-			
-			BorderPane kattisBPRank = new BorderPane();
-			
-			VBox kattisBoxRank = new VBox();
-			
-			GridPane kattisGPRank = new GridPane();
-			kattisGPRank.setHgap(0);
-			kattisGPRank.setVgap(0);
-			kattisBPRank.setCenter(kattisGPRank); 
-			//kattisGPRank.setGridLinesVisible(true); <-- Listen, it's useful for debugging okay...
-			
-			Button ranksRank = new Button("RANKS");
-			ranksRank.setFont(Font.font(null, FontWeight.BOLD, 14));
-			
-			Button submissionRank = new Button("SUBMISSIONS");
-			submissionRank.setFont(Font.font(null, FontWeight.BOLD, 14));
-				
-			///// Creating the Table /////////////////////////	
-			TableView<User> rankTable = new TableView<User>();
-			rankTable.setEditable(true);
-			
-			TableColumn<User, Integer> rankNum = new TableColumn<User, Integer>("#");    //
-			rankNum.setMinWidth(200);                      // JavaFX allows you to create a table element
-		    //rankNum.setCellValueFactory(new PropertyValueFactory<User, Integer>("Rank"));
-			
-		    TableColumn<User, String> user = new TableColumn<User, String>("USER");    // by defining it's columns and later defining
-			user.setMinWidth(500);                         // what they consist of. These are the columns
-			//user.setCellValueFactory(new PropertyValueFactory<User, String>("DisplayName"));
-			
-			TableColumn<User, Double> score = new TableColumn<User, Double>("SCORE");  //
-			score.setMinWidth(300);
-			//score.setCellValueFactory(new PropertyValueFactory<User, Double>("Score"));
-			
-			// TODO fix
-			/*PreparedStatement rankList;
-			try {
-				rankList = con.prepareStatement("SELECT RANK() OVER (ORDER BY US_SCORE DESC) AS 'Rank', (SELECT US_DISPLAY_NAME FROM USERS WHERE US_ID=user_ranklist.US_ID) AS 'User', US_SCORE AS 'Score' FROM user_ranklist");
-        		ResultSet result = rankList.executeQuery();        		
-        		while (result.next()) {
-        				userList.add(new User(result.getInt(1), result.getString(2), result.getDouble(3)));
-        		}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}*/
-			
-			
-			
-			/// Note: For populating the table, I wasn't quite sure how it would interact with JDBC, so
-			///       I'm leaving that to you. It's a little funky to get working properly, but this 
-			///       link (https://docs.oracle.com/javafx/2/ui_controls/table-view.htm) should hopefully 
-			///       clear it up, as it's very well explained. Good luck :D
-				
-			///// Smol Kattis Cat Icon /////////////////////////	
-			
-			Image jRank = new Image(inputRank);
-			ImageView jwRank = new ImageView(jRank);
-			Label pictureKattisRank = new Label("", jwRank);
-			
-			///// Adding Some Labels /////////////////////////
-			
-			Label tableTitle = new Label("Ranklist");
-			tableTitle.setFont(Font.font(null, FontWeight.BOLD, 21));
-			
-			Label kattisTitleRank = new Label("Kattniss");
-			kattisTitleRank.setFont(Font.font(null, 26));
-			
-			Label activeUserRank = new Label("");
-			activeUserRank.setFont(Font.font(null, 14));
-				
-			///// Making the Orange Bar /////////////////////////
-			
-			Rectangle rectRank = new Rectangle(1000,1000,1920*2,5);
-			rectRank.setStroke(Color.web("#f0b034"));
-			rectRank.setFill(Color.web("#f0b034"));
-			
-			///// Adding Our Nodes /////////////////////////
-
-			kattisGPRank.add(activeUserRank, 0, 0);			
-			kattisGPRank.add(pictureKattisRank, 0, 1, 1, 2);  //
-			kattisGPRank.add(kattisTitleRank, 1, 1);          // The header bar is organized in a GridPane,
-			kattisGPRank.add(ranksRank, 1, 2);                // and then I will add the table below using
-			kattisGPRank.add(submissionRank, 2, 2);           // a basic VBox. For design and organization
-			kattisGPRank.add(rectRank, 0, 3, 5, 1);           //
-			
-			///// Compiling it in the VBox /////////////////////////
-
-			kattisBoxRank.getChildren().addAll(kattisGPRank, tableTitle, rankTable);
-			
-			///// Setting Id's for CSS /////////////////////////
-			
-			ranksRank.setId("activeBtn");
-			submissionRank.setId("inactiveBtn");
-			kattisTitleRank.setId("kattisTitle");
-			activeUserRank.setId("activeUser");
-			tableTitle.setId("tableTitle");
-			kattisGPRank.setId("kattisGP");
-			
-			///// Finally, we make the Scene /////////////////////////
-			
-			kattisRank = new Scene(kattisBoxRank, 1000, 700);
-			kattisRank.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
-			
-			//////////////////////////////////////////////////////////////////////////////////////
-			///// Now, we get on to one of the parts of JavaFX that really grinds my gears.  /////
-			///// You see, I was planning on having the header part with the tab bar remain  /////
-			///// static, and then reuse it for the Submission tab, to save some space and   /////
-			///// minimize the amount of code required. Well, JavaFX said no... Basically,   /////
-			///// it turns out you can't reuse nodes for different Scenes, or even different /////
-			///// Panes. So, since I'm too far gone now, I decided to just copy the above    /////
-			///// code, change all the variable names, and call it a night. No, it's not the /////
-			///// best way to do it. But I'm workin with what I've got here. Thanks for      /////
-			///// listening to my TED Talk.                                                  /////
-			//////////////////////////////////////////////////////////////////////////////////////
-			
-			FileInputStream inputSub = new FileInputStream(System.getProperty("user.dir") + "\\Kattis_Kat_smol.png");
-			
-			BorderPane kattisBPSub = new BorderPane();
-			
-			VBox kattisBoxSub = new VBox();
-			
-			GridPane kattisGPSub = new GridPane();
-			kattisGPSub.setHgap(0);
-			kattisGPSub.setVgap(0);
-			kattisBPSub.setCenter(kattisGPSub); 
-			//kattisGPSub.setGridLinesVisible(true); <-- still a debugging tool, I'm keeping it >:)
-			
-			Button ranksSub = new Button("RANKS");
-			ranksSub.setFont(Font.font(null, FontWeight.BOLD, 14));
-			
-			Button submissionSub = new Button("SUBMISSIONS");
-			submissionSub.setFont(Font.font(null, FontWeight.BOLD, 14));
-			
-			///// Creating the Choice Boxes /////////////////////////	
-			
-			/// Note: These are hardcoded, but if we need to pull these from the database
-			///       we can just use an ArrayList instead (so we don't have to worry about
-			///       number of problems) and pull the values in through JDBC.
-			/// Note: If you do pull values from the database, don't forget to add "Malboge"
-			///       back as a choice in the java, so that the database will reject it.
-			
-			
-			String langs[] = {("C"), ("C#"), ("C++"), ("COBOL"), ("F#"), ("Go"),
-							  ("Haskell"), ("Java"), ("Node.js"), ("SpiderMonkey"), ("Kotlin"), 
-							  ("Common Lisp"), ("Malboge"), ("Objective-C"), ("OCaml"), ("Pascal"), ("PHP"), 
-							  ("Prolog"), ("Python 2"), ("Python 3"), ("Ruby"), ("Rust")};
-			ChoiceBox language = new ChoiceBox(FXCollections.observableArrayList(langs));
-			language.setMinWidth(600);
-			
-			
-			PreparedStatement loadProblems;
-			ArrayList<String> probsAL = new ArrayList<String>();
-			String probs[] = {};
-			System.out.println(checkUser);
-			try {
-				loadProblems = con.prepareStatement("SELECT P_NAME FROM PROBLEM WHERE P_ID NOT IN (SELECT P_ID FROM user_triumph WHERE US_ID=(SELECT US_ID FROM USERS WHERE US_DISPLAY_NAME = ?))");
-				loadProblems.setString(1, checkUser);
-        		ResultSet result = loadProblems.executeQuery();
-        		
-        		while (result.next()) {
-        			probsAL.add(result.getString(1));
-        		}
-        		
-        		probs = probsAL.toArray(probs);
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			ChoiceBox problems = new ChoiceBox(FXCollections.observableArrayList(probs));
-			problems.setMinWidth(600);
-			
-			///// Creating the Code Input Area /////////////////////////	
-			
-			TextArea codeInput = new TextArea();
-			codeInput.setMinHeight(100);
-			codeInput.setMaxWidth(600);
-			codeInput.setWrapText(true);
-			
-			///// Creating the Code Submit Button /////////////////////////	
-			
-			Button submit = new Button("Submit!");
-			submissionSub.setFont(Font.font(null, FontWeight.BOLD, 14));
-			Label submitResult = new Label();
-			
-			///// Creating Other Nodes /////////////////////////	
-			
-			Image jSub = new Image(inputSub);
-			ImageView jwSub = new ImageView(jSub);
-			Label pictureKattisSub = new Label("", jwSub);
-			
-			Label kattisTitleSub = new Label("Kattniss");
-			kattisTitleSub.setFont(Font.font(null, 26));
-			
-			Label activeUserSub = new Label("");
-			activeUserSub.setFont(Font.font(null, 14));
-			
-			Label Problem = new Label("Problems");
-			Problem.setFont(Font.font(null, FontWeight.BOLD, 21));
-			
-			Label Language = new Label("Languages");
-			Language.setFont(Font.font(null, FontWeight.BOLD, 21));
-			
-			Label Code = new Label("copy/paste code here");
-			Code.setFont(Font.font(null, FontWeight.BOLD, 21));
-			
-			Rectangle rectSub = new Rectangle(1000,1000,1920*2,5);
-			rectSub.setStroke(Color.web("#f0b034"));
-			rectSub.setFill(Color.web("#f0b034"));
-			
-			kattisGPSub.add(activeUserSub, 0, 0);
-			kattisGPSub.add(pictureKattisSub, 0, 1, 1, 2);
-			kattisGPSub.add(kattisTitleSub, 1, 1);
-			kattisGPSub.add(ranksSub, 1, 2);
-			kattisGPSub.add(submissionSub, 2, 2);
-			kattisGPSub.add(rectSub, 0, 3, 5, 1);
-
-			kattisBoxSub.getChildren().addAll(kattisGPSub, Problem, problems, Language, language, Code, codeInput, submit, submitResult);
-			
-			ranksSub.setId("inactiveBtn");
-			submissionSub.setId("activeBtn");
-			kattisTitleSub.setId("kattisTitle");
-			activeUserSub.setId("activeUser");
-			submit.setId("submit");
-			kattisGPSub.setId("kattisGP");
-			
-			kattisSub = new Scene(kattisBoxSub, 1000, 700);
-			kattisSub.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
-			
-			///// Setting Up Button Actions /////////////////////////
-			
-			ranksSub.setOnAction(new EventHandler<>() {
-				public void handle(ActionEvent event) {
-					primaryStage.setScene(kattisRank);  // This is for switching to the Ranks Tab
-				}
-			});
-			
-			submissionRank.setOnAction(new EventHandler<>() {
-				public void handle(ActionEvent event) {
-					primaryStage.setScene(kattisSub);   // This is for switching to the Submissions Tab
-				}
-			});
-			
-			
-			// This handles and gives console output for the submission, which you can integrate with JDBC
-			
-			submit.setOnAction(new EventHandler<>() {
-				public void handle(ActionEvent event) {
-					String problemChoice = "" + problems.getValue();
-					String langChoice = "" + language.getValue();
-					String code = codeInput.getText();
-					
-					System.out.println("Problem Selected : " + problemChoice);
-					System.out.println("Submission Language : " + langChoice);
-					System.out.println("Submitted Code : \n" + code);
-					
-					PreparedStatement submission, output;
-					ResultSet result;
-					try {
-						submission = con.prepareStatement("CALL submit((SELECT US_ID FROM USERS WHERE US_DISPLAY_NAME=?), ?,(SELECT P_ID FROM PROBLEM WHERE P_NAME=?), ?, ?, @x)");
-						submission.setString(1, checkUser);
-						submission.setString(2, checkPw);
-						submission.setString(3, problemChoice);
-						submission.setString(4, langChoice);
-						submission.setString(5, code);
-						
-						submission.executeQuery();
-		        		
-						output = con.prepareStatement("SELECT @x");
-						result = output.executeQuery();
-						result.next();
-						
-						submitResult.setTextFill(Color.BLUE);
-						submitResult.setText(result.getString(1)); // This should be handled by the stored procedure
-						}
-					
-					catch (SQLException e){
-						System.out.println(e);
-					}
-				}
-			});
-			
-			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
