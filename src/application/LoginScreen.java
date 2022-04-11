@@ -21,15 +21,15 @@ import javafx.scene.text.*;
 
 public class LoginScreen extends Application{
 	String checkUser, checkPw;
-	String activeUser;
+	User activeUser;
 	Scene kattisRank, kattisSub;
 	Random rand = new Random();
 	static ArrayList<User> userList = new ArrayList<User>();
 	
 	public static void main(String[] args) {
-		User Matt = new User("brother", "bababooey", 1, "New Brunswick", "Canada", 42069);
-		User Jeremy = new User("SkullyBot", "mrBusiness", 1, "New Brunswick", "Canada", 99999);  // These users can be pulled from the database
-		User Aiden = new User("CriticalMonkey", "1234Assword", 1, "New Brunswick", "Canada", 0); // instead of hardcoded. This was for testing.
+		User Matt = new User("brother", "bababooey", 1, "New Brunswick", "Canada", 42069);      // These users can be pulled from the database
+		User Jeremy = new User("SkullyBot", "mrBusiness", 1, "New Brunswick", "Canada", 99999); // instead of hardcoded. This was for testing.
+		User Aiden = new User("CriticalMonkey", "1234Assword", 1, "New Brunswick", "Canada", 0); 
 		User Admin = new User("Admin", "0", 0, "", "", 0);
 		
 		userList.add(Aiden);
@@ -61,7 +61,7 @@ public class LoginScreen extends Application{
 			TilePane loginTP = new TilePane(Orientation.VERTICAL);
 			loginTP.setPadding(new Insets(20, 50, 50, 50));
 			loginTP.setVgap(5);
-			loginTP.setMaxWidth(100);
+			loginTP.setMaxWidth(100); 
 		    loginTP.setPrefColumns(1);
 		    
 			///// GridPane /////////////////////////
@@ -387,9 +387,9 @@ public class LoginScreen extends Application{
 				        			primaryStage.setScene(kattisRank);
 				        			primaryStage.setTitle("Kattniss");
 				        			check = true;
-				        			activeUser = u.getName();
-				        			activeUserRank.setText("Logged in as " + activeUser);
-				        			activeUserSub.setText("Logged in as " + activeUser);
+				        			activeUser = u;
+				        			activeUserRank.setText("Logged in as " + activeUser.getName());
+				        			activeUserSub.setText("Logged in as " + activeUser.getName());
 				        			
 				        		}
 			        		}
