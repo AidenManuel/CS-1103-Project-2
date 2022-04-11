@@ -1,27 +1,25 @@
 package application;
 
 public class User {
-	private String DisplayName, Password, Subdivision, Region;
-	private int UniversityID, Score;
+	private String DisplayName, Subdivision, Region;
+	private int UniversityID, Rank;
+	private double Score;
 	
 	
-	public User (String DisplayName, String Password, int UniversityID, String Subdivision, String Region, int Score) {
+	public User ( int Rank, String DisplayName, double Score) {
 		this.DisplayName = DisplayName;
-		this.Password = Password;
-		this.UniversityID = UniversityID;
-		this.Subdivision = Subdivision;
-		this.Region = Region;
+		//this.Password = Password;
+		//this.UniversityID = UniversityID;
+		//this.Subdivision = Subdivision;
+		//this.Region = Region;
 		this.Score = Score;
+		this.Rank = Rank;
 	}
 	
 	public String getName() {
 		return DisplayName;
 	}
 
-	public String getPassword() {
-		return Password;
-	}
-	
 	public String getSubdivision() {
 		return Subdivision;
 	}
@@ -34,8 +32,12 @@ public class User {
 		return UniversityID;
 	}
 	
-	public int getScore() {
+	public double getScore() {
 		return Score;
+	}
+	
+	public int getRank() {
+		return Rank;
 	}
 	
 	public String toString() {

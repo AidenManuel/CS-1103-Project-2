@@ -13,12 +13,15 @@ import javafx.geometry.*;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.*;
 import java.sql.*;
+import javafx.collections.ObservableList;
+
 
 public class LoginScreen extends Application{
 	String checkUser, checkPw;
@@ -26,7 +29,8 @@ public class LoginScreen extends Application{
 	Scene kattisRank, kattisSub;
 	Random rand = new Random();
 	static Connection con = null;
-	static ArrayList<User> userList = new ArrayList<User>();
+	//static ArrayList<User> userList = new ArrayList<User>();
+	static ObservableList<User> userList = FXCollections.observableArrayList();
 	
 	public static void main(String[] args) {
 		
@@ -158,16 +162,35 @@ public class LoginScreen extends Application{
 			submissionRank.setFont(Font.font(null, FontWeight.BOLD, 14));
 				
 			///// Creating the Table /////////////////////////	
-			
-			TableView rankTable = new TableView();
+			TableView<User> rankTable = new TableView<User>();
 			rankTable.setEditable(true);
-			TableColumn rankNum = new TableColumn("#");    //
+			
+			TableColumn<User, Integer> rankNum = new TableColumn<User, Integer>("#");    //
 			rankNum.setMinWidth(200);                      // JavaFX allows you to create a table element
-			TableColumn user = new TableColumn("USER");    // by defining it's columns and later defining
+		    //rankNum.setCellValueFactory(new PropertyValueFactory<User, Integer>("Rank"));
+			
+		    TableColumn<User, String> user = new TableColumn<User, String>("USER");    // by defining it's columns and later defining
 			user.setMinWidth(500);                         // what they consist of. These are the columns
-			TableColumn score = new TableColumn("SCORE");  //
+			//user.setCellValueFactory(new PropertyValueFactory<User, String>("DisplayName"));
+			
+			TableColumn<User, Double> score = new TableColumn<User, Double>("SCORE");  //
 			score.setMinWidth(300);
+			//score.setCellValueFactory(new PropertyValueFactory<User, Double>("Score"));
+			
+			PreparedStatement rankList;
+			try {
+				rankList = con.prepareStatement("SELECT RANK() OVER (ORDER BY US_SCORE DESC) AS 'Rank', (SELECT US_DISPLAY_NAME FROM USERS WHERE US_ID=user_ranklist.US_ID) AS 'User', US_SCORE AS 'Score' FROM user_ranklist");
+        		ResultSet result = rankList.executeQuery();        		
+        		while (result.next()) {
+        				userList.add(new User(result.getInt(1), result.getString(2), result.getDouble(3)));
+        		}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+			rankTable.setItems(userList);
 			rankTable.getColumns().addAll(rankNum, user, score);
+			
 			
 			/// Note: For populating the table, I wasn't quite sure how it would interact with JDBC, so
 			///       I'm leaving that to you. It's a little funky to get working properly, but this 
@@ -301,15 +324,12 @@ public class LoginScreen extends Application{
 			
 			Label Problem = new Label("Problems");
 			Problem.setFont(Font.font(null, FontWeight.BOLD, 21));
-			Problem.setId("tableTitle");
 			
 			Label Language = new Label("Languages");
 			Language.setFont(Font.font(null, FontWeight.BOLD, 21));
-			Language.setId("tableTitle");
 			
 			Label Code = new Label("copy/paste code here");
 			Code.setFont(Font.font(null, FontWeight.BOLD, 21));
-			Code.setId("tableTitle");
 			
 			Rectangle rectSub = new Rectangle(1000,1000,1920*2,5);
 			rectSub.setStroke(Color.web("#f0b034"));
