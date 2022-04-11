@@ -1,0 +1,418 @@
+-- By Matthew Kenneth Peterson and Aiden Alexander Manuel
+DROP TABLE IF EXISTS user_triumph;
+DROP TABLE IF EXISTS presents;
+DROP TABLE IF EXISTS participate_within;
+DROP TABLE IF EXISTS LANGUAGES;
+DROP TABLE IF EXISTS SUBMISSION;
+DROP TABLE IF EXISTS TEAM;
+DROP TABLE IF EXISTS USERS;
+DROP TABLE IF EXISTS CONTEST;
+DROP TABLE IF EXISTS UNIVERSITY;
+DROP TABLE IF EXISTS SUBDIVISION;
+DROP TABLE IF EXISTS REGION;
+DROP TABLE IF EXISTS PROBLEM;
+ -- SQL recognizes USER as a key word, it seems. Adding an s for plurality solely because of this quirk.
+
+CREATE TABLE CONTEST (
+	C_ID			INT					UNSIGNED	AUTO_INCREMENT	NOT NULL	PRIMARY KEY 	UNIQUE	,
+    C_NAME			VARCHAR(45)			NOT NULL,
+    C_START_DATE	DATE 				NOT NULL,
+    C_START_TIME	DATETIME 			NOT NULL,
+	C_LENGTH		TIME  				NOT NULL,
+    C_IS_ORIGINAL	BINARY  			NOT NULL,
+    C_IS_USER_CREATED	BINARY  		NOT NULL,
+    C_IS_UPCOMING 	BINARY 				NOT NULL,
+    C_IS_CURRENT	BINARY				NOT NULL,
+    C_IS_PAST 		BINARY 				NOT NULL
+);
+
+CREATE TABLE PROBLEM (
+	P_ID					INT			UNSIGNED	AUTO_INCREMENT	NOT NULL	UNIQUE	PRIMARY KEY,
+	P_DIFFICULTY			DOUBLE		NOT NULL	CHECK (P_DIFFICULTY>=1 AND P_DIFFICULTY<=10),
+    P_CPU_TIME_LIMIT		TIME		DEFAULT 0	CHECK (P_CPU_TIME_LIMIT>=0),
+    P_MEM_LIMIT_MB			INT			DEFAULT 0	CHECK (P_MEM_LIMIT_MB>=0),
+    P_LICENSE				VARCHAR(45),
+	P_HAS_TRIED				BINARY		NOT NULL	DEFAULT 0,
+	P_HASOLVED			BINARY		NOT NULL	DEFAULT 0,
+	P_USER_ACCEPTED			INT			NOT NULL 	DEFAULT 0 	CHECK (P_USER_ACCEPTED>=0),
+	P_USER_TOTAL			INT			NOT NULL	DEFAULT 0 	CHECK (P_USER_TOTAL>=0),
+	P_SUBMISSION_ACCEPTED	INT			NOT NULL 	DEFAULT 0 	CHECK (P_SUBMISSION_ACCEPTED>=0),
+	P_SUBMISSION_DENIED		INT			NOT NULL 	DEFAULT 0 	CHECK (P_SUBMISSION_DENIED>=0),
+	P_NAME					VARCHAR(45)	NOT NULL,
+	P_AUTHOR_NAME			VARCHAR(45)	NOT NULL,
+	P_DESCRIPTION			BLOB		NOT NULL,
+	P_SAMPLE_INPUT			BLOB,
+	P_SAMPLE_OUTPUT			BLOB,
+	P_FASTEST_TIME			TIME		NOT NULL 	DEFAULT 0 	CHECK (P_FASTEST_TIME>=0),
+    P_ANSWER				BLOB		NOT NULL
+);
+
+CREATE TABLE REGION (
+	R_NAME 	VARCHAR(45)	NOT NULL	UNIQUE	PRIMARY KEY,
+	R_FLAG	BLOB
+);
+
+CREATE TABLE SUBDIVISION (
+	SUB_NAME	VARCHAR(45)		UNIQUE	 NOT NULL,		-- We can reasonably assume that a country wouldn't have two districts/provinces/states by the same name
+    R_NAME		VARCHAR(45)		NOT NULL,
+    SUB_FLAG	BLOB,
+    
+    PRIMARY KEY (SUB_NAME, R_NAME),
+    FOREIGN KEY (R_NAME) REFERENCES REGION(R_NAME) ON UPDATE CASCADE
+);
+
+CREATE TABLE UNIVERSITY (
+	UN_ID					INT			UNSIGNED	AUTO_INCREMENT	NOT NULL	UNIQUE,
+	UN_NAME					VARCHAR(45)	NOT NULL,
+	UN_SCORE				DOUBLE		NOT NULL	DEFAULT 0		CHECK (UN_SCORE>=0),
+	UN_CREST				BLOB,
+    SUB_NAME				VARCHAR(45),
+    R_NAME					VARCHAR(45),
+    
+    PRIMARY KEY (UN_ID, SUB_NAME, R_NAME),
+    FOREIGN KEY (SUB_NAME) REFERENCES SUBDIVISION(SUB_NAME),
+    FOREIGN KEY (R_NAME) REFERENCES REGION(R_NAME)
+);
+
+CREATE TABLE TEAM (
+	T_ID	INT 	UNSIGNED	AUTO_INCREMENT	NOT NULL	UNIQUE	PRIMARY KEY,
+	T_DISPLAY_NAME	VARCHAR(45)	NOT NULL,
+	T_OWNER_ID 		VARCHAR(45)	NOT NULL,
+	R_NAME 			VARCHAR(25),
+	
+	FOREIGN KEY (R_NAME) REFERENCES REGION(R_NAME) ON UPDATE CASCADE
+);
+
+CREATE TABLE USERS (
+    US_ID                    INT            UNSIGNED    AUTO_INCREMENT    NOT NULL    UNIQUE     PRIMARY KEY,
+    US_PSWD                    VARCHAR(45)    NOT NULL    DEFAULT "1234",
+    -- US_EMAIL                VARCHAR(45)    NOT NULL,    commenting out this attribute because its complicated  and only necessary to Kattis as a service
+    R_NAME                    VARCHAR(45) NOT NULL,
+    US_DISPLAY_NAME            VARCHAR(45)    NOT NULL,
+    UN_ID                    INT            UNSIGNED     DEFAULT NULL,
+    US_AVATAR                BLOB,
+    SUB_NAME                VARCHAR(45),
+
+    FOREIGN KEY (R_NAME) REFERENCES REGION(R_NAME) ON UPDATE CASCADE,
+    FOREIGN KEY (UN_ID) REFERENCES UNIVERSITY(UN_ID) ON UPDATE CASCADE,
+    FOREIGN KEY (SUB_NAME) REFERENCES SUBDIVISION(SUB_NAME) ON UPDATE CASCADE
+);
+
+CREATE TABLE SUBMISSION (
+    S_ID                    INT         UNSIGNED     AUTO_INCREMENT    NOT NULL    UNIQUE    PRIMARY KEY,
+    S_RUNTIME               TIME,
+    S_LANGUAGE              VARCHAR(25),
+    S_DATE                  DATETIME    NOT NULL,
+    S_CONTENT               BLOB,
+    US_ID                   INT         UNSIGNED     NOT NULL,
+    T_ID                    INT         UNSIGNED,
+    P_ID                    INT         UNSIGNED,
+	SOLVED                	INT(1),
+
+    FOREIGN KEY (US_ID) REFERENCES USERS(US_ID) ON UPDATE CASCADE,
+    FOREIGN KEY (T_ID) REFERENCES TEAM(T_ID) ON UPDATE CASCADE,
+    FOREIGN KEY (P_ID) REFERENCES PROBLEM(P_ID) ON UPDATE CASCADE
+);
+
+CREATE TABLE LANGUAGES (
+    L_NAME    VARCHAR(25)    NOT NULL UNIQUE    PRIMARY KEY
+);
+INSERT INTO LANGUAGES VALUES ("C"), ("C#"), ("C++"), ("COBOL"), ("F#"), ("Go"),
+                             ("Haskell"), ("Java"), ("Node.js"), ("SpiderMonkey"), ("Kotlin"), 
+                             ("Common Lisp"), ("Objective-C"), ("OCaml"), ("Pascal"), ("PHP"), 
+                             ("Prolog"), ("Python 2"), ("Python 3"), ("Ruby"), ("Rust");
+
+-- ********** M:N RELATIONSHIPS ****************
+	
+CREATE TABLE participate_within (
+	US_ID	INT UNSIGNED 		NOT NULL,
+	T_ID	INT UNSIGNED 		NOT NULL,
+	
+	PRIMARY KEY (US_ID, T_ID),
+    FOREIGN KEY (US_ID) REFERENCES USERS(US_ID),
+	FOREIGN KEY (T_ID) REFERENCES TEAM(T_ID)
+);
+
+CREATE TABLE presents (
+	C_ID INT UNSIGNED ,
+	P_ID INT UNSIGNED NOT NULL,
+	
+    PRIMARY KEY (C_ID, P_ID),
+	FOREIGN KEY (C_ID) REFERENCES CONTEST(C_ID),
+	FOREIGN KEY (P_ID) REFERENCES PROBLEM(P_ID)
+);
+
+CREATE TABLE user_triumph (
+	US_ID INT UNSIGNED 	NOT NULL	CHECK (US_ID>=0),
+    P_ID INT UNSIGNED 	NOT NULL	CHECK (P_ID>=0),
+    
+    PRIMARY KEY (US_ID, P_ID),
+    FOREIGN KEY (P_ID) REFERENCES PROBLEM(P_ID),
+    FOREIGN KEY (US_ID) REFERENCES USERS(US_ID)
+);
+
+-- ********** TRIGGERS AND VIEWS **********
+
+delimiter &bababooey
+	CREATE TRIGGER triumph_update AFTER INSERT ON SUBMISSION FOR EACH ROW BEGIN
+		IF (new.SOLVED = 1 AND NOT EXISTS(SELECT * FROM user_triumph WHERE user_triumph.P_ID = SUBMISSION.new.P_ID AND user_triumph.US_ID = SUBMISSION.new.US_ID))
+        THEN INSERT INTO user_triumph VALUES (SUBMISSION.new.US_ID, SUBMISSION.new.P_ID); END IF; END
+	&bababooey
+delimiter ;
+
+DROP VIEW IF EXISTS user_scores;
+CREATE VIEW user_scores AS
+	SELECT US_ID, SUM(P_DCUBED) AS US_SCORE 
+    FROM (
+		user_triumph 
+			LEFT JOIN 
+		(SELECT P_ID, POW(P_DIFFICULTY,3) as P_DCUBED FROM PROBLEM) as temp 
+			ON user_triumph.P_ID=temp.P_ID
+		)
+    GROUP BY US_ID;
+
+
+DROP VIEW IF EXISTS user_ranklist;
+CREATE VIEW user_ranklist AS (
+	SELECT * FROM user_scores ORDER BY US_SCORE DESC
+);
+
+DROP VIEW IF EXISTS	canada_provincial_ranklist;
+CREATE VIEW canada_provincial_ranklist AS (
+	SELECT SUB_NAME, SUM(US_SCORE) AS SUB_SCORE FROM (
+		(SELECT SUB_NAME, US_ID FROM USERS WHERE R_NAME='CANADA') as temp1 
+			LEFT JOIN 
+		(SELECT US_ID, US_SCORE FROM user_scores) as temp2 ON temp1.US_ID=temp2.US_ID) 
+	GROUP BY SUB_NAME
+);
+
+DROP VIEW IF EXISTS problem_stats;
+CREATE VIEW problem_stats AS (
+	SELECT 
+    
+    P_NAME AS "NAME", 
+    P_ID AS ID, 
+    (P_SUBMISSION_DENIED + P_SUBMISSION_ACCEPTED) AS "SUBMISSION TOTAL", 
+    P_SUBMISSION_ACCEPTED AS "ACCEPTED SUBMISSIONS", 
+    CAST((P_SUBMISSION_ACCEPTED / (P_SUBMISSION_DENIED + P_SUBMISSION_ACCEPTED)) AS DECIMAL(5, 4)) AS "SUBMISSION SUCCESS RATIO(%)", 
+    P_FASTEST_TIME AS "FASTEST SUBMISSION TIME",
+    P_USER_TOTAL AS "USER TALLY",
+    P_USER_ACCEPTED AS "USER SUCCESS",
+    CAST((P_USER_ACCEPTED / P_USER_TOTAL) AS DECIMAL(5, 4)) AS "USER SUCCESS RATIO(%)"
+    
+    FROM PROBLEM ORDER BY P_NAME ASC	-- ascending order orders problems alphabetically, as does Kattis by default
+);
+
+-- **********  DATA CREATION **************
+
+-- 2.2-1	These values are not at all accurate to the actual Kattis problems they emulate. Our design rules out the potential
+-- for multiple possible answers, so I've made most answers up as if they are the ONLY possible answers. (I'm too lazy to edit the pasted descriptions LOL)
+INSERT INTO PROBLEM (P_DIFFICULTY, P_NAME, P_AUTHOR_NAME, P_DESCRIPTION, P_ANSWER) 
+	VALUES (1.1, "Easy", "Matthew Peterson", "Return the integer value 2.", 2);
+INSERT INTO PROBLEM (P_DIFFICULTY, P_NAME, P_AUTHOR_NAME, P_DESCRIPTION, P_ANSWER) 
+	VALUES (8.9, "Killer", "Owen Kaser", "A famous logical problem is that of connecting 9 dots on a paper by drawing 4 line segments with a pencil, while never lifting the pencil from the paper. While this is easy enough (although it requires some thinking outside of the box), Simone has recently been building a game called “Connect the Dots” around a generalisation of the concept. In Connect the Dots, you are presented with a 4×4 regular grid of dots. Each dot is given a unique number between 1 and 16. The task is then to connect the dots in order by their numbers, starting with dot 1 and ending with dot 16. The dots should be connected using as few line segments as possible, starting at dot 1, with the end of each segment being the start point of the next. The segments are allowed to intersect and overlap one another. Additionally, it is allowed to pass through other points while trying to connect the current point. This means, for example, that visiting the first four points in the order 1,4,2,3,2,4,… is acceptable. Formally, the sequence 1,2,…,15,16 must be a subsequence of the sequence of dots visited.", 6);
+INSERT INTO PROBLEM (P_DIFFICULTY, P_NAME, P_AUTHOR_NAME, P_DESCRIPTION, P_ANSWER) 
+	VALUES (1.3, "R2", "Croatian Open", "The number S is called the mean of two numbers R1 and R2 if S is equal to (R1+R2)/2. Mirko’s birthday present for Slavko was two integers R1 and R2. Slavko promptly calculated their mean which also happened to be an integer but then lost R2! Help Slavko restore R2.", 19);
+INSERT INTO PROBLEM (P_DIFFICULTY, P_NAME, P_AUTHOR_NAME, P_DESCRIPTION, P_ANSWER) 
+	VALUES (1.5, "Speeding", "ICPC", "You’d like to figure out whether a car was speeding while it was driving down a straight road. Unfortunately, you don’t have any radar guns or related instruments for measuring speed directly; all you have are photographs taken of the car at various checkpoints on the road at various times. Given when and where these photographs were taken, what is the fastest speed that you can prove the car must have been going at some point along the road?", 1);
+INSERT INTO PROBLEM (P_DIFFICULTY, P_NAME, P_AUTHOR_NAME, P_DESCRIPTION, P_ANSWER) 
+	VALUES (8.8, "3-Sided Dice", "SWERC", "Just like every fall, the organizers of the Southwestern Europe Dice Simulation Contest are busy again this year. In this edition you have to simulate a 3-sided die that outputs each of three possible outcomes (which will be denoted by 1, 2 and 3) with a given probability, using three dice...", "YES");
+
+-- 2.2-2	Universities
+INSERT INTO REGION (R_NAME) VALUES ("Canada");
+INSERT INTO REGION (R_NAME) VALUES ("United States");
+INSERT INTO REGION (R_NAME) VALUES ("Sweden");
+
+INSERT INTO SUBDIVISION (SUB_NAME, R_NAME)  VALUES ("New Brunswick", "Canada");
+INSERT INTO SUBDIVISION (SUB_NAME, R_NAME)  VALUES ("British Columbia", "Canada");
+INSERT INTO SUBDIVISION (SUB_NAME, R_NAME)  VALUES ("Georgia", "United States");
+INSERT INTO SUBDIVISION (SUB_NAME, R_NAME)  VALUES ("Utah", "United States");
+INSERT INTO SUBDIVISION (SUB_NAME, R_NAME)  VALUES ("Stockholm County", "Sweden");
+INSERT INTO SUBDIVISION (SUB_NAME, R_NAME)  VALUES ("Skane County", "Sweden");
+
+INSERT INTO UNIVERSITY (UN_NAME, SUB_NAME, R_NAME) VALUES ("University of New Brunswick Saint John", "New Brunswick", "Canada");
+INSERT INTO UNIVERSITY (UN_NAME, SUB_NAME, R_NAME) VALUES ("Mount Allison University", "New Brunswick", "Canada");
+INSERT INTO UNIVERSITY (UN_NAME, SUB_NAME, R_NAME) VALUES ("Georgia Institute of Technology", "Georgia", "United States");
+INSERT INTO UNIVERSITY (UN_NAME, SUB_NAME, R_NAME) VALUES ("University of Utah", "Utah", "United States");
+INSERT INTO UNIVERSITY (UN_NAME, SUB_NAME, R_NAME) VALUES ("KTH Royal Institute of Technology", "Stockholm County", "Sweden");
+INSERT INTO UNIVERSITY (UN_NAME, SUB_NAME, R_NAME) VALUES ("Lund University", "Skane County", "Sweden");
+
+
+-- 2.2-3	Users
+INSERT INTO USERS (US_DISPLAY_NAME, UN_ID, SUB_NAME, R_NAME) VALUES ("Nick Wu", 3, "New Brunswick", "Canada");
+INSERT INTO USERS (US_DISPLAY_NAME, SUB_NAME, R_NAME) VALUES ("Andrew Roberts", "Utah", "United States");
+INSERT INTO USERS (US_DISPLAY_NAME, UN_ID, SUB_NAME, R_NAME) VALUES ("Crystal Sharpe", 2, "New Brunswick", "Canada");
+
+-- 2.2-4	Random User Generation
+DROP PROCEDURE IF EXISTS random_user_add;
+delimiter ^^^
+	CREATE PROCEDURE random_user_add(IN COUNT INT, IN UNI_ID INT)
+		BEGIN
+			DECLARE i, x, y int;
+            SET i = 0;
+            
+            DROP TABLE IF EXISTS NAMETEMP;
+            CREATE TABLE NAMETEMP(
+				I INT			NOT NULL	UNIQUE,
+                F VARCHAR(45) 	NOT NULL 	UNIQUE,
+                L VARCHAR(45) 	NOT NULL 	UNIQUE
+			);
+			INSERT INTO NAMETEMP VALUES (1, "Aubree ", "Jonah");
+            INSERT INTO NAMETEMP VALUES (2, "Levi ", "Pamelia");
+            INSERT INTO NAMETEMP VALUES (3, "Ivan ", "Britney");
+            INSERT INTO NAMETEMP VALUES (4, "Laurencia ", "Brice");
+            INSERT INTO NAMETEMP VALUES (5, "Mia ", "Leila");
+            INSERT INTO NAMETEMP VALUES (6, "Xavia ", "Orpha");
+            INSERT INTO NAMETEMP VALUES (7, "Buddy ", "Primrose");
+            INSERT INTO NAMETEMP VALUES (8, "Zenia ", "Caelan");
+            INSERT INTO NAMETEMP VALUES (9, "Jack ", "Stirling");
+            INSERT INTO NAMETEMP VALUES (10, "Debra ", "Araminta");
+            INSERT INTO NAMETEMP VALUES (11, "Lucia ", "Vivian");
+            INSERT INTO NAMETEMP VALUES (12, "Cordelia ", "Debbie");
+            
+            WHILE (i < COUNT) DO
+				SET x = FLOOR(RAND()*(12-1+1))+1;
+                SET y = FLOOR(RAND()*(12-1+1))+1;
+                INSERT INTO USERS (R_NAME, US_DISPLAY_NAME, UN_ID, SUB_NAME)
+                VALUES (
+					(SELECT R_NAME FROM UNIVERSITY WHERE UN_ID=UNI_ID),
+                    CONCAT(
+						(SELECT F FROM NAMETEMP WHERE NAMETEMP.I = x),
+                        (SELECT L FROM NAMETEMP WHERE NAMETEMP.I = y)
+					),
+                    UNI_ID,		-- our design has a surrogate key for universities that automagically increments. all procedure calls 
+								-- below take into account this system, which orders universities in the order they are added to the DB
+                    (SELECT SUB_NAME FROM UNIVERSITY WHERE UN_ID=UNI_ID)
+				);
+                SET i = i + 1;
+			END WHILE;
+            DROP TABLE IF EXISTS NAMETEMP;
+		END
+	^^^
+delimiter ;
+-- random_user_add( <how many users to add>, <which university> )
+CALL random_user_add (20,1);
+CALL random_user_add (20,2);
+CALL random_user_add (20,3);
+CALL random_user_add (20,4);
+CALL random_user_add (20,5);
+CALL random_user_add (20,6);
+-- SELECT * FROM USERS;		LOL Kaser moemtn
+
+-- 2.2-8	Random Users Attempts
+DROP PROCEDURE IF EXISTS random_solve;
+delimiter %IAmSoTired%
+	CREATE PROCEDURE random_solve(IN US_F INT, IN US_C INT, IN PR_ID INT, IN LANG VARCHAR(25), IN SUB_F INT, IN SUB_C INT, IN YEAR_OFFSET INT, IN REJECT INT)
+		BEGIN
+			DECLARE attempt_i int;
+            DECLARE i int;
+            DECLARE wubwub INT(1);
+            
+			WHILE (US_F < US_C+1)
+			DO
+				SET i = 1;
+                SET attempt_i = FLOOR(RAND()*(SUB_C-SUB_F+1))+SUB_F;	-- figures out how many attempts before success
+                
+                myloop: WHILE (i <= attempt_i) DO
+					IF (i = REJECT) THEN LEAVE myloop; END IF;	-- break condition given by parameter
+                    IF (i = attempt_i) THEN SET wubwub=1; END IF;
+                    IF (i <> attempt_i) THEN SET wubwub=0; END IF;
+                    
+                    INSERT INTO SUBMISSION (S_LANGUAGE, S_DATE, US_ID, P_ID, SOLVED) VALUES (LANG, DATE_ADD(current_timestamp(), INTERVAL (YEAR_OFFSET)*8760 HOUR), US_F, PR_ID, wubwub);
+					-- INSERT INTO SUBMISSION (SOLVED, S_LANGUAGE, S_DATE, US_ID, P_ID) VALUES (wubwub,LANG,DATE_ADD(CURDATE(), INTERVAL YEAR_OFFSET YEAR),US_F,PR_ID);
+                    -- technically speaking, this is random. don't @ me.
+                    SET i = i + 1;
+				END WHILE;
+                
+                SET US_F = US_F + 1;
+			END WHILE;
+		END
+	%IAmSoTired%
+    
+delimiter ;
+
+-- random_solve( <user id floor, inclusive>, <user id cieling, inclusive>,--  <problem id>, <submission count floor>, <submission count ceiling>, 
+-- <year offset from current date>, <submission limit before breaking loop>)
+CALL random_solve(4, 123, 1, "Java", 1, 10, -4, -1);	-- all randoms solve "Easy" at random times over past 4 years, between 1 and 10 attempts
+CALL random_solve(24, 25, 2, "Java", 201, 201, 0, 201); -- no random has solved killer; 2 attempt 200 times each; failure to solve (201 condition)
+CALL random_solve(1, 123, 3, "Java", 1, 2, 0, -1);		-- all user attempt problem 3; 50-50 chance they get it on first or second try (roughly half of all users)
+CALL random_solve(1, 123, 4, "Java", 2, 10, 0, -1);		-- all user attempt problem 4; no chance of first try success (between 2 and 10 attempts each)
+
+
+
+-- 2.3 Queries
+-- 2.3-1
+SELECT COUNT(*) FROM SUBMISSION; 
+-- 2.3-2
+SELECT US_ID FROM SUBMISSION ORDER BY S_DATE ASC LIMIT 1;
+-- 2.3-3
+SELECT R_NAME, COUNT(*) AS NUMBER_OF_UNIVERSITIES FROM UNIVERSITY GROUP BY R_NAME ORDER BY NUMBER_OF_UNIVERSITIES DESC;
+-- 2.3-4
+SELECT US_ID, U.R_NAME, S.R_NAME FROM USERS AS U JOIN SUBDIVISION AS S ON U.SUB_NAME=S.SUB_NAME WHERE U.R_NAME<>S.R_NAME;
+-- 2.3-5
+SELECT US_DISPLAY_NAME, US_ID FROM USERS AS US JOIN UNIVERSITY AS UNI ON US.UN_ID=UNI.UN_ID WHERE US.R_NAME<>UNI.R_NAME;
+-- 2.3-6
+SELECT US_DISPLAY_NAME, COUNT(*) AS MOST_COMMON_NAME FROM USERS GROUP BY US_DISPLAY_NAME ORDER BY MOST_COMMON_NAME DESC, US_DISPLAY_NAME ASC LIMIT 1; -- If many have same count, sort by alphabetical order
+-- 2.3-7
+SELECT S.SUB_NAME, S.R_NAME, COUNT(*) AS TOTAL_USERS FROM SUBDIVISION AS S JOIN USERS AS U ON S.SUB_NAME=U.SUB_NAME GROUP BY S.SUB_NAME ORDER BY TOTAL_USERS DESC;
+-- 2.3-8
+SELECT S.R_NAME, COUNT(DISTINCT S.SUB_NAME) AS TOTAL_SUBDIVISIONS FROM SUBDIVISION AS S JOIN USERS AS U ON S.SUB_NAME=U.SUB_NAME GROUP BY S.R_NAME ORDER BY TOTAL_SUBDIVISIONS DESC;
+-- 2.3-9
+SELECT US_DISPLAY_NAME FROM USERS U JOIN SUBMISSION AS S ON U.US_ID=S.US_ID GROUP BY US_DISPLAY_NAME HAVING COUNT(S.P_ID)>1 AND COUNT(S.SOLVED)>2;
+-- 2.3-10
+SELECT DISTINCT P_ID, US_ID FROM SUBMISSION ORDER BY S_DATE ASC;
+-- 2.3-11
+SELECT US_SCORE, GROUP_CONCAT(US_ID) AS US_IDS FROM user_scores GROUP BY US_SCORE HAVING COUNT(US_SCORE) > 1;
+-- 2.3-12
+
+
+
+-- 2.4-1
+
+DROP PROCEDURE IF EXISTS submit;
+delimiter %IHaventSeenTheSunInWeeks%
+    CREATE PROCEDURE submit(IN userid INT, IN userpswd VARCHAR(45), IN problemid INT, IN lang VARCHAR(25), IN content BLOB, OUT result VARCHAR(100))
+
+        X:BEGIN
+            DECLARE judgementDay int;
+            SET judgementDay = FLOOR(RAND()*(4))+1;
+
+            -- Password check
+            IF ((SELECT US_PSWD FROM USERS WHERE USERS.US_ID = userid)) <>  userpswd THEN
+                SELECT "BAD PARAMETER: Incorrect password." INTO result;
+                LEAVE X;
+            END IF;
+
+            -- Language support check
+            IF NOT EXISTS (SELECT * FROM LANGUAGES WHERE L_NAME=lang) THEN
+				SELECT "BAD PARAMETER: Your language isn't supported." INTO result;
+                LEAVE X;
+            END IF;
+
+            -- Randomly generated outcome
+            IF judgementDay = 1 THEN 
+                INSERT INTO SUBMISSION (SOLVED, S_LANGUAGE, S_DATE, S_CONTENT, US_ID, P_ID)
+                VALUES (1, lang, CURDATE(), content, userid, problemid);
+                SELECT "Your answer was correct." INTO result;
+            ELSE
+                INSERT INTO SUBMISSION (SOLVED, S_LANGUAGE, S_DATE, S_CONTENT, US_ID, P_ID)
+                VALUES (0, lang, CURDATE(), content, userid, problemid);
+
+                CASE 
+                    WHEN judgementDay = 2 THEN SELECT "Your answer was incorrect." INTO result;
+                    WHEN judgementDay = 3 THEN SELECT "Your answer exceeded the question's runtime limit." INTO result;
+                    ELSE SELECT "Your answer experienced a runtime error." INTO result;
+                END CASE;
+            END IF;
+        END
+    %IHaventSeenTheSunInWeeks%
+delimiter ;
+
+-- debug
+-- CALL submit(1, "1234", 1, "C", "insert submission content here", @x);
+-- SELECT @x;
+
+SELECT COUNT(*) FROM USERS WHERE US_DISPLAY_NAME = "Nick Wu" AND US_PSWD = "1234";
+
+SELECT * FROM SUBMISSION;
+SELECT * FROM user_scores;
