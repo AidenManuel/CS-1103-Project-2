@@ -426,6 +426,15 @@ delimiter %IHaventSeenTheSunInWeeks%
     %IHaventSeenTheSunInWeeks%
 delimiter ;
 
+DROP VIEW IF EXISTS javafx_user_ranklist;
+CREATE VIEW javafx_user_ranklist AS (
+	SELECT ROW_NUMBER() OVER (ORDER BY US_SCORE DESC) AS r, (SELECT US_DISPLAY_NAME FROM USERS WHERE US_ID=user_ranklist.US_ID) AS u, US_SCORE AS s FROM user_ranklist
+);
+
+SET @y = (SELECT r FROM javafx_user_ranklist WHERE u = 'Nick Wu');
+SELECT * FROM javafx_user_ranklist WHERE r > (@y-6) AND r < (@y+3); -- AND (`Rank` > (SELECT `Rank` FROM javafx_user_ranklist WHERE `User` = 'Nick Wu') - 3);
+SELECT r FROM javafx_user_ranklist WHERE u = 'Nick Wu';
+
 -- everything below is debug, we'll leave it in because it's interesting 
 -- CALL submit(1, "1234", 1, "C", "insert submission content here", @x);
 -- SELECT @x;
