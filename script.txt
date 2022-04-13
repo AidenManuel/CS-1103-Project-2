@@ -1,4 +1,4 @@
--- By Matthew Kenneth Peterson and Aiden Alexander Manuel
+-- By Matthew Kenneth Peterson, Jeremy Pelletier and Aiden Alexander Manuel
 DROP TABLE IF EXISTS user_triumph;
 DROP TABLE IF EXISTS presents;
 DROP TABLE IF EXISTS participate_within;
@@ -426,18 +426,18 @@ delimiter %IHaventSeenTheSunInWeeks%
     %IHaventSeenTheSunInWeeks%
 delimiter ;
 
--- debug
+-- everything below is debug, we'll leave it in because it's interesting 
 -- CALL submit(1, "1234", 1, "C", "insert submission content here", @x);
 -- SELECT @x;
 
-SELECT COUNT(*) FROM USERS WHERE US_DISPLAY_NAME = "Nick Wu" AND US_PSWD = "1234";
+-- SELECT COUNT(*) FROM USERS WHERE US_DISPLAY_NAME = "Nick Wu" AND US_PSWD = "1234";
 
-SELECT * FROM SUBMISSION LIMIT 1000, 2000;
-SELECT * FROM user_scores;
-SELECT * FROM user_ranklist;
-SELECT * FROM canada_provincial_ranklist;
-SELECT * FROM problem_stats;
+-- SELECT * FROM SUBMISSION LIMIT 1000, 2000;
+-- SELECT * FROM user_scores;
+-- SELECT * FROM user_ranklist;
+-- SELECT * FROM canada_provincial_ranklist;
+-- SELECT * FROM problem_stats;
 
-SELECT * FROM user_triumph ORDER BY US_ID;
-SELECT P_NAME FROM PROBLEM WHERE P_ID NOT IN (SELECT P_ID FROM user_triumph WHERE US_ID=(SELECT US_ID FROM USERS WHERE US_DISPLAY_NAME = "Nick Wu"));
-SELECT * FROM PROBLEM;
+-- SELECT * FROM user_triumph ORDER BY US_ID;
+-- SELECT P_NAME FROM PROBLEM WHERE P_ID NOT IN (SELECT P_ID FROM user_triumph WHERE US_ID=(SELECT US_ID FROM USERS WHERE US_DISPLAY_NAME = "Nick Wu"));
+-- SELECT * FROM PROBLEM;
