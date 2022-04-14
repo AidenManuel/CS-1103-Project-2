@@ -30,7 +30,7 @@ public class LoginScreen extends Application{
 	Scene kattisRank, kattisSub;
 	Random rand = new Random();
 	static Connection con = null;
-
+	static ObservableList<User> userList = FXCollections.observableArrayList();
 	
 	public static void main(String[] args) {
 		
@@ -135,6 +135,7 @@ public class LoginScreen extends Application{
 			btnLogin.setOnAction(new EventHandler<>() {
 				public void handle(ActionEvent event) {
 	        		checkUser = UNtbox.getText().toString();
+	        		System.out.println("user: " + checkUser);
 	        		checkPw = PWtbox.getText().toString();
 	        		Boolean check = false;
 	        		
@@ -163,7 +164,7 @@ public class LoginScreen extends Application{
 		    			//////////////////////////////////////////////////////
 		    			///// KATTIS SCENES //////////////////////////////////
 		    			//////////////////////////////////////////////////////
-
+		        		System.out.println("user: " + checkUser);
 		    			FileInputStream inputRank = null;
 						try {
 							inputRank = new FileInputStream(System.getProperty("user.dir") + "\\Kattis_Kat_smol.png");
@@ -175,6 +176,8 @@ public class LoginScreen extends Application{
 		    			BorderPane kattisBPRank = new BorderPane();
 		    			
 		    			VBox kattisBoxRank = new VBox();
+		    			FlowPane headers = new FlowPane();
+		    			FlowPane jerryRigEverything = new FlowPane();
 		    			
 		    			GridPane kattisGPRank = new GridPane();
 		    			kattisGPRank.setHgap(0);
@@ -190,28 +193,75 @@ public class LoginScreen extends Application{
 		    				
 		    			///// Creating the Table /////////////////////////	
 		    			
-		    			PreparedStatement rankList;
+		    			Font header = Font.font("Arial", FontWeight.BOLD , 20);
+		    			Font list = Font.font("Consolas", 18);
+		    			
+		    			TextArea HR = new TextArea();
+		    			HR.setMaxSize(100, 50);
+		    			HR.setMinSize(100, 50);
+		    			HR.setFont(header);
+		    			HR.setText("Rank #:");
+		    			HR.setEditable(false);
+		    			TextArea HU = new TextArea();
+		    			HU.setMaxSize(500, 50);
+		    			HU.setMinSize(500, 50);
+		    			HU.setFont(header);
+		    			HU.setText("Display Names:");
+		    			HU.setEditable(false);
+		    			TextArea HS = new TextArea();
+		    			HS.setMaxSize(100, 50);
+		    			HS.setMinSize(100, 50);
+		    			HS.setFont(header);
+		    			HS.setText("Scores:");
+		    			HS.setEditable(false);
+		    			
+		    			headers.getChildren().add(HR);
+		    			headers.getChildren().add(HU);
+		    			headers.getChildren().add(HS);
+		    			
+		    			TextArea tableRank = new TextArea();
+		    			tableRank.setMaxWidth(100);
+		    			tableRank.setMinWidth(100);
+		    			tableRank.setFont(list);
+		    			tableRank.setEditable(false);
+		    			TextArea tableUsers = new TextArea();
+		    			tableUsers.setMaxWidth(500);
+		    			tableUsers.setMinWidth(500);
+		    			tableUsers.setFont(list);
+		    			tableUsers.setEditable(false);
+		    			TextArea tableScore = new TextArea();
+		    			tableScore.setMaxWidth(100);
+		    			tableScore.setMinWidth(100);
+		    			tableScore.setFont(list);
+		    			tableScore.setEditable(false);
+		    			
+		    			PreparedStatement variable, rankList;
 		    			try {
-		    				rankList = con.prepareStatement("SELECT RANK() OVER (ORDER BY US_SCORE DESC) AS 'Rank', (SELECT US_DISPLAY_NAME FROM USERS WHERE US_ID=user_ranklist.US_ID) AS 'User', US_SCORE AS 'Score' FROM user_ranklist");
-		            		ResultSet result = rankList.executeQuery();        		
+		    				variable = con.prepareStatement("SET @y = (SELECT r FROM javafx_user_ranklist WHERE u = ?)");
+		    				variable.setString(1, checkUser);
+		    				variable.execute();
+		    				
+		    				rankList = con.prepareStatement("SELECT * FROM javafx_user_ranklist WHERE r > (@y-6) AND r < (@y+3)");
+		            		ResultSet result = rankList.executeQuery();    
+		            		
+		            		String temp1 = "Ranks:", temp2 = "Users:", temp3 = "Scores:";
+		            		
 		            		while (result.next()) {
-		            				//userList.add(new User(result.getInt(1), result.getString(2), result.getDouble(3)));
-		            				// userList is what WOULD be the observable list. This code indeed results in proper users. Good luck tabelling them
+		            			temp1 = tableRank.getText();
+		            			temp2 = tableUsers.getText();
+		            			temp3 = tableScore.getText();
+		            			tableRank.setText(temp1 + "\n" + result.getInt(1));
+		            			tableUsers.setText(temp2 + "\n" + result.getString(2));
+		            			tableScore.setText(temp3 + "\n" + result.getDouble(3));
 		            		}
 		    			} catch (SQLException e) {
 		    				e.printStackTrace();
 		    			}
 		    			
-
+		    			jerryRigEverything.getChildren().add(tableRank);
+		    			jerryRigEverything.getChildren().add(tableUsers);
+		    			jerryRigEverything.getChildren().add(tableScore);
 		    			
-		    			
-		    			
-		    			
-		    			/// Note: For populating the table, I wasn't quite sure how it would interact with JDBC, so
-		    			///       I'm leaving that to you. It's a little funky to get working properly, but this 
-		    			///       link (https://docs.oracle.com/javafx/2/ui_controls/table-view.htm) should hopefully 
-		    			///       clear it up, as it's very well explained. Good luck :D
-		    				
 		    			///// Smol Kattis Cat Icon /////////////////////////	
 		    			
 		    			Image jRank = new Image(inputRank);
@@ -246,7 +296,7 @@ public class LoginScreen extends Application{
 		    			
 		    			///// Compiling it in the VBox /////////////////////////
 
-		    			kattisBoxRank.getChildren().addAll(kattisGPRank, tableTitle, table);
+		    			kattisBoxRank.getChildren().addAll(kattisGPRank, tableTitle, headers, jerryRigEverything);
 		    			
 		    			///// Setting Id's for CSS /////////////////////////
 		    			
@@ -278,7 +328,6 @@ public class LoginScreen extends Application{
 						try {
 							inputSub = new FileInputStream(System.getProperty("user.dir") + "\\Kattis_Kat_smol.png");
 						} catch (FileNotFoundException e1) {
-							// TODO Auto-generated catch block
 							e1.printStackTrace();
 						}
 		    			
@@ -330,7 +379,6 @@ public class LoginScreen extends Application{
 		            		
 		            		probs = probsAL.toArray(probs);
 		    			} catch (SQLException e) {
-		    				// TODO Auto-generated catch block
 		    				e.printStackTrace();
 		    			}
 		    			
